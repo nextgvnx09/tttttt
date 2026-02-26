@@ -1,0 +1,636 @@
+# 📚 Panduan Pembuatan Website SMAN 2 Tompaso
+
+Dokumen ini menjelaskan bagaimana website SMAN 2 Tompaso dibuat dari awal hingga menjadi seperti yang Anda lihat saat ini.
+
+---
+
+## 🎯 Pendahuluan
+
+Website SMAN 2 Tompaso adalah portal sekolah profesional yang dibangun dengan teknologi modern. Website ini memiliki berbagai fitur termasuk:
+
+- Halaman profil sekolah
+- Portal berita dan informasi
+- Daftar guru dan staff
+- Gallery kegiatan dan prestasi
+- Sistem PPDB (Penerimaan Peserta Didik Baru)
+- Portal guru dengan sistem autentikasi
+- Dashboard admin untuk mengelola konten
+
+---
+
+## 🛠️ Teknologi yang Digunakan
+
+### 1. **Frontend Framework**
+```
+React 19 + TypeScript
+```
+- React adalah library JavaScript untuk membangun user interface
+- TypeScript menambahkan type safety pada kode
+- Menggunakan versi React 19 (terbaru)
+
+### 2. **Build Tool**
+```
+Vite 6.0.1
+```
+- Vite adalah build tool yang cepat untuk frontend modern
+- Menyediakan development server yang cepat
+- Bundle optimization yang baik
+
+### 3. **Styling**
+```
+Tailwind CSS 3.4.15
+```
+- Utility-first CSS framework
+- Memudahkan styling dengan class-class pre-defined
+- Responsive design yang mudah
+
+### 4. **Icons**
+```
+Lucide React 0.462.0
+```
+- Koleksi icons yang clean dan modern
+- easy to use dengan React components
+
+### 5. **Backend (Opsional)**
+```
+Supabase 2.38.0
+```
+- Firebase alternative berbasis PostgreSQL
+- Untuk sync data ke cloud (saat ini masih menggunakan LocalStorage)
+
+### 6. **AI Integration**
+```
+Google GenAI 1.34.0
+```
+- Untuk fitur AI seperti AI Creative Lab dan AI Scholar
+
+---
+
+## 📁 Struktur Project
+
+```
+sman-2-tompaso/
+├── components/              # Semua React components
+│   ├── Navbar.tsx          # Navigation bar
+│   ├── Footer.tsx          # Footer website
+│   ├── Hero.tsx            # Hero section di homepage
+│   ├── SchoolProfile.tsx   # Halaman profil sekolah
+│   ├── TeachersSection.tsx # Daftar guru
+│   ├── NewsSection.tsx     # Berita dan informasi
+│   ├── ActivitiesSection.tsx # Kegiatan sekolah
+│   ├── AchievementsShowcase.tsx # Prestasi
+│   ├── StudentGallery.tsx  # Gallery foto
+│   ├── PPDBRegistration.tsx # Formulir PPDB
+│   ├── AdminLogin.tsx      # Login admin
+│   ├── AdminDashboard.tsx  # Dashboard admin
+│   ├── TeacherLogin.tsx    # Login guru
+│   ├── TeacherDashboard.tsx # Dashboard guru
+│   └── ... (banyak lagi)
+├── lib/
+│   ├── actions.ts          # Fungsi-fungsi untuk CRUD dan autentikasi
+│   └── supabase.ts         # Konfigurasi Supabase
+├── types.ts                # Definisi TypeScript interfaces
+├── constants/
+│   ├── theme.ts            # Konfigurasi tema warna
+│   └── assets.ts           # Asset statis (gambar, dll)
+├── App.tsx                 # Main component dengan routing
+├── index.html              # Entry point HTML
+├── index.css               # Global CSS styles
+├── package.json            # Dependencies
+├── tailwind.config.js      # Konfigurasi Tailwind
+├── vite.config.ts          # Konfigurasi Vite
+└── tsconfig.json           # Konfigurasi TypeScript
+```
+
+---
+
+## 🚀 Langkah-Langkah Pembuatan
+
+### Langkah 1: Setup Project
+
+```
+bash
+# Buat project baru dengan Vite
+npm create vite@latest sman-2-tompaso -- --template react-ts
+
+# Masuk ke directory project
+cd sman-2-tompaso
+
+# Install dependencies
+npm install
+
+# Install dependencies tambahan
+npm install -D tailwindcss postcss autoprefixer
+npm install lucide-react @supabase/supabase-js @google/genai
+npm install -D @types/react @types/react-dom typescript
+```
+
+### Langkah 2: Konfigurasi Tailwind CSS
+
+```
+bash
+# Initialize Tailwind
+npx tailwindcss init -p
+```
+
+Edit `tailwind.config.js`:
+```
+javascript
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+    "./**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        primary: '#0A0F1E',
+        accent: '#D4AF37',
+      },
+      fontFamily: {
+        sans: ['Plus Jakarta Sans', 'sans-serif'],
+        serif: ['Cormorant Garamond', 'serif'],
+      },
+    },
+  },
+  plugins: [],
+}
+```
+
+Edit `index.css`:
+```
+css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom fonts */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Cormorant+Garamond:wght@400;500;600;700&display=swap');
+
+/* Custom styles */
+@layer base {
+  body {
+    @apply font-sans text-primary;
+  }
+}
+```
+
+### Langkah 3: Membuat Type Definitions
+
+Buat file `types.ts` untuk mendefinisikan tipe data:
+
+```
+typescript
+export interface NewsItem {
+  id: string | number;
+  title: string;
+  category: string;
+  excerpt: string;
+  content: string;
+  image_url: string;
+  date: string;
+  author_name: string;
+}
+
+export interface SchoolSchedule {
+  id: string | number;
+  title: string;
+  day?: string;
+  startTime?: string;
+  endTime?: string;
+  description: string;
+  type: 'daily' | 'weekly' | 'event' | 'holiday';
+}
+
+export interface Announcement {
+  id: string | number;
+  title: string;
+  content: string;
+  priority: 'low' | 'medium' | 'high';
+  status: 'active' | 'archived';
+  published_date: string;
+}
+
+export enum Page {
+  HOME = 'HOME',
+  PROFIL = 'PROFIL',
+  GURU = 'GURU',
+  KEGIATAN = 'KEGIATAN',
+  BERITA = 'BERITA',
+  PPDB = 'PPDB',
+  ADMIN = 'ADMIN',
+  GURU_PORTAL = 'GURU_PORTAL'
+  // ... other pages
+}
+```
+
+### Langkah 4: Membuat Components
+
+Contoh membuat Navbar component:
+
+```
+typescript
+// components/Navbar.tsx
+import React from 'react';
+import { Page } from '../types';
+import { Menu, X } from 'lucide-react';
+
+interface NavbarProps {
+  activePage: Page;
+  setActivePage: (page: Page) => void;
+}
+
+const Navbar: React.FC<NavbarProps> = ({ activePage, setActivePage }) => {
+  const [isOpen, setIsOpen] = React.useState(false);
+
+  const navItems = [
+    { page: Page.HOME, label: 'Beranda' },
+    { page: Page.PROFIL, label: 'Profil' },
+    { page: Page.GURU, label: 'Guru' },
+    { page: Page.KEGIATAN, label: ' Kegiatan' },
+    { page: Page.PRESTASI, label: 'Prestasi' },
+    { page: Page.BERITA, label: 'Berita' },
+    { page: Page.GALERI, label: 'Galeri' },
+    { page: Page.PPDB, label: 'PPDB' },
+  ];
+
+  return (
+    <nav className="bg-primary text-white sticky top-0 z-50">
+      <div className="container mx-auto px-4">
+        <div className="flex justify-between items-center h-16">
+          <div className="text-xl font-bold text-accent">
+            SMAN 2 Tompaso
+          </div>
+          
+          {/* Desktop Menu */}
+          <div className="hidden md:flex space-x-4">
+            {navItems.map(item => (
+              <button
+                key={item.page}
+                onClick={() => setActivePage(item.page)}
+                className={`px-3 py-2 rounded-md transition-colors ${
+                  activePage === item.page 
+                    ? 'bg-accent text-primary' 
+                    : 'hover:bg-white/10'
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+            <button 
+              onClick={() => setActivePage(Page.GURU_PORTAL)}
+              className="px-4 py-2 bg-accent text-primary rounded-md font-medium"
+            >
+              GURU
+            </button>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button 
+            className="md:hidden"
+            onClick={() => setIsOpen(!isOpen)}
+          >
+            {isOpen ? <X /> : <Menu />}
+          </button>
+        </div>
+      </div>
+    </nav>
+  );
+};
+
+export default Navbar;
+```
+
+### Langkah 5: Membuat App.tsx (Main Component)
+
+```
+typescript
+// App.tsx
+import React, { useState, useEffect } from 'react';
+import { Page } from './types';
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
+import Hero from './components/Hero';
+import NewsSection from './components/NewsSection';
+// import other components...
+
+const App: React.FC = () => {
+  const [activePage, setActivePage] = useState<Page>(Page.HOME);
+
+  const renderContent = () => {
+    switch (activePage) {
+      case Page.HOME:
+        return (
+          <div className="bg-white min-h-screen">
+            <Hero />
+            <NewsSection />
+            {/* Other home page sections */}
+          </div>
+        );
+      case Page.PROFIL:
+        return <SchoolProfile />;
+      case Page.GURU:
+        return <TeachersSection />;
+      case Page.BERITA:
+        return <NewsSection isFullPage={true} />;
+      case Page.PPDB:
+        return <PPDBRegistration />;
+      // ... other cases
+      default:
+        return <Hero />;
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col bg-white">
+      <Navbar activePage={activePage} setActivePage={setActivePage} />
+      <main className="flex-grow">{renderContent()}</main>
+      <Footer />
+    </div>
+  );
+};
+
+export default App;
+```
+
+### Langkah 6: Menambahkan Fitur Autentikasi
+
+Buat sistem login untuk admin dan guru:
+
+```
+typescript
+// lib/actions.ts
+import { Teacher, NewsItem, SchoolSchedule, Announcement } from '../types';
+
+// Admin accounts (hardcoded for demo)
+const ADMIN_ACCOUNTS = [
+  { username: 'admin@sman2t', password: 'AdmSMAN2T@2026!Kw7Qt9Mx#Vb5Np2Zd', role: 'admin' },
+  { username: 'junus.akay', password: 'KplSMAN2T@2026!Jn8Ky4Pw#Lx6Qm3Rb', role: 'kepala_sekolah' },
+];
+
+// Teacher accounts
+const TEACHER_ACCOUNTS = [
+  { username: 'rosni.lumentah', password: 'RsNiSMAN@2026!Rl5Zn7Kp#Dj9Qx2Wv', name: 'Rosni Lumentah, S.Pd', role: 'guru' },
+  // ... more teachers
+];
+
+export async function loginAdmin(username: string, password: string): Promise<boolean> {
+  const account = ADMIN_ACCOUNTS.find(
+    acc => acc.username === username && acc.password === password
+  );
+  if (account) {
+    localStorage.setItem('adminSession', JSON.stringify(account));
+    return true;
+  }
+  return false;
+}
+
+export async function loginTeacher(username: string, password: string): Promise<Teacher | null> {
+  const account = TEACHER_ACCOUNTS.find(
+    acc => acc.username === username && acc.password === password
+  );
+  if (account) {
+    localStorage.setItem('teacherSession', JSON.stringify(account));
+    return account;
+  }
+  return null;
+}
+
+// CRUD Operations for News
+export function getNews(): NewsItem[] {
+  const news = localStorage.getItem('news');
+  return news ? JSON.parse(news) : [];
+}
+
+export function addNews(news: NewsItem): void {
+  const allNews = getNews();
+  allNews.unshift(news);
+  localStorage.setItem('news', JSON.stringify(allNews));
+}
+
+export function updateNews(id: string | number, updatedNews: NewsItem): void {
+  const allNews = getNews();
+  const index = allNews.findIndex(n => n.id === id);
+  if (index !== -1) {
+    allNews[index] = updatedNews;
+    localStorage.setItem('news', JSON.stringify(allNews));
+  }
+}
+
+export function deleteNews(id: string | number): void {
+  const allNews = getNews().filter(n => n.id !== id);
+  localStorage.setItem('news', JSON.stringify(allNews));
+}
+
+// Similar functions for Schedule, Announcements, etc.
+```
+
+### Langkah 7: Membuat Dashboard Admin
+
+```
+typescript
+// components/AdminDashboard.tsx
+import React, { useState } from 'react';
+import { getNews, addNews, updateNews, deleteNews } from '../lib/actions';
+import { NewsItem } from '../types';
+
+const AdminDashboard: React.FC = () => {
+  const [news, setNews] = useState<NewsItem[]>(getNews());
+  const [showModal, setShowModal] = useState(false);
+  const [editingNews, setEditingNews] = useState<NewsItem | null>(null);
+
+  const handleSave = (newsItem: NewsItem) => {
+    if (editingNews) {
+      updateNews(newsItem.id, newsItem);
+    } else {
+      addNews({ ...newsItem, id: Date.now() });
+    }
+    setNews(getNews());
+    setShowModal(false);
+    setEditingNews(null);
+  };
+
+  const handleDelete = (id: string | number) => {
+    if (confirm('Apakah Anda yakin ingin menghapus berita ini?')) {
+      deleteNews(id);
+      setNews(getNews());
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100 p-8">
+      <div className="container mx-auto">
+        <h1 className="text-3xl font-bold mb-8">Dashboard Admin</h1>
+        
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-gray-500">Total Berita</h3>
+            <p className="text-3xl font-bold">{news.length}</p>
+          </div>
+          {/* More stats... */}
+        </div>
+
+        {/* News Table */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Kelola Berita</h2>
+            <button 
+              onClick={() => setShowModal(true)}
+              className="bg-accent text-primary px-4 py-2 rounded-md"
+            >
+              + Tambah Berita
+            </button>
+          </div>
+          
+          <table className="w-full">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left py-2">Judul</th>
+                <th className="text-left py-2">Kategori</th>
+                <th className="text-left py-2">Tanggal</th>
+                <th className="text-left py-2">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {news.map(item => (
+                <tr key={item.id} className="border-b">
+                  <td className="py-2">{item.title}</td>
+                  <td className="py-2">{item.category}</td>
+                  <td className="py-2">{item.date}</td>
+                  <td className="py-2">
+                    <button 
+                      onClick={() => { setEditingNews(item); setShowModal(true); }}
+                      className="text-blue-600 mr-2"
+                    >
+                      Edit
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(item.id)}
+                      className="text-red-600"
+                    >
+                      Hapus
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AdminDashboard;
+```
+
+---
+
+## 🎨 Desain dan Styling
+
+### Warna yang Digunakan
+
+| Warna | Kode | Penggunaan |
+|-------|------|------------|
+| Primary | `#0A0F1E` | Background utama, navbar |
+| Accent | `#D4AF37` | Tombol, highlight, aksen |
+
+### Font yang Digunakan
+
+- **Plus Jakarta Sans** - Font sans-serif untuk body text
+- **Cormorant Garamond** - Font serif untuk heading yang elegan
+
+### Komponen UI
+
+1. **Navbar** - Sticky navigation dengan menu responsif
+2. **Hero Section** - Banner besar dengan judul dan call-to-action
+3. **Cards** - Untuk menampilkan berita, guru, jadwal
+4. **Modals** - Untuk form input dan edit data
+5. **Tables** - Untuk menampilkan data di dashboard
+6. **Forms** - Untuk input data (berita, jadwal, PPDB)
+
+---
+
+## 📱 Fitur-Fitur Utama
+
+### 1. Halaman Utama (Home)
+- Hero section dengan selamat datang
+- Stats section (jumlah guru, siswa, prestasi)
+- Sambutan kepala sekolah
+- Jadwal sekolah
+- Berita terbaru
+
+### 2. Profil Sekolah
+- Sejarah sekolah
+- Visi dan misi
+- Struktur organisasi
+- Fasilitas
+
+### 3. Portal Guru
+- Login dengan username dan password
+- Dashboard dengan statistik
+- Kelola berita
+- Kelola jadwal
+- Kelola pengumuman
+
+### 4. Portal Admin
+- Full CRUD untuk semua konten
+- Manajemen user
+- Statistik lengkap
+
+### 5. PPDB Online
+- Formulir pendaftaran
+- Status penerimaan
+- Informasi persyaratan
+
+---
+
+## 🖥️ Cara Menjalankan
+
+### Development Mode
+```
+bash
+npm install
+npm run dev
+```
+Buka http://localhost:5173 di browser
+
+### Production Build
+```
+bash
+npm run build
+npm run preview
+```
+
+---
+
+## 📝 Catatan Pengembangan
+
+1. **Data Storage**: Saat ini menggunakan LocalStorage. Untuk production, disarankan menggunakan Supabase atau database lain.
+
+2. **Authentication**: Sistem autentikasi masih sederhana. Untuk production, gunakan sistem yang lebih secure.
+
+3. **Deployment**: Website bisa di-deploy ke Vercel, Netlify, atau hosting lainnya.
+
+4. **Maintenance**: Lakukan backup data secara berkala jika menggunakan LocalStorage.
+
+---
+
+## ✅ Kesimpulan
+
+Website SMAN 2 Tompaso dibuat dengan mengikuti best practices dalam pengembangan web modern:
+
+1. **Component-Based Architecture** - Setiap bagian website dibuat sebagai component React yang reusable
+2. **Type Safety** - Menggunakan TypeScript untuk mencegah error
+3. **Responsive Design** - Tailwind CSS memastikan tampilan bagus di semua ukuran layar
+4. **Clean Code** - Kode terorganisir dengan baik dan mudah dipahami
+5. **User Experience** - Navigasi intuitif dan tampilan profesional
+
+Dengan struktur dan teknologi ini, website dapat dengan mudah dikembangkan lagi dengan fitur-fitur baru.
+
+---
+
+**Dibuat dengan ❤️ untuk SMAN 2 Tompaso**
